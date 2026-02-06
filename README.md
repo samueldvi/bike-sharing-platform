@@ -38,50 +38,53 @@ without rewriting core logic.
 
 ## 3. Architecture Overview
 
+```text
 [ Client (curl / browser) ]
-|
-v
-API Layer (FastAPI)
-/v1 REST endpoints
-|
-v
-Application Layer
-(Use Cases / Commands)
-|
-v
-Domain Layer (CORE)
-- Assignment Aggregate
-- Business Invariants
-|
-v
-Infrastructure Layer
-(In-memory repository → database later) 
-The **Domain Layer** represents the core of the system and remains
+              |
+              v
+        API Layer (FastAPI)
+        /v1 REST endpoints
+              |
+              v
+     Application Layer
+     (Use Cases / Commands)
+              |
+              v
+     Domain Layer (CORE)
+     - Assignment Aggregate
+     - Business Invariants
+              |
+              v
+   Infrastructure Layer
+   (In-memory repository → database later)
+
+   The Domain Layer represents the core of the system and remains
 independent from delivery and infrastructure concerns.
 
----
-
-## 4. API (v1)
+4. API (v1)
 
 Available endpoints:
 
-- GET  /v1/health
-- POST /v1/assign  
-  `{ "user_id": "U1", "bicycle_id": "B1" }`
-- POST /v1/release  
-  `{ "assignment_id": "<id>" }`
-- GET  /v1/bikes-in-use
-- GET  /v1/user-bike/{user_id}
+GET /v1/health
 
----
+POST /v1/assign
+{ "user_id": "U1", "bicycle_id": "B1" }
 
-## 5. Running the Service (Docker on EC2)
+POST /v1/release
+{ "assignment_id": "<id>" }
 
-The service is exposed via the **public IP address assigned by AWS EC2**.
+GET /v1/bikes-in-use
 
-Replace `<EC2_PUBLIC_IP>` with the instance public IPv4 address.
+GET /v1/user-bike/{user_id}
 
-```bash
+5. Running the Service (Docker on EC2)
+
+The service is exposed via the public IP address assigned by AWS EC2.
+
+Replace <EC2_PUBLIC_IP> with the instance public IPv4 address.
+
 docker compose -p bike-sharing up --build -d
 curl http://<EC2_PUBLIC_IP>:8000/v1/health
-eof
+
+
+EOF

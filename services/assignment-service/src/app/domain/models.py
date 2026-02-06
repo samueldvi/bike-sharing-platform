@@ -3,6 +3,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
+from .errors import ConflictError
+
 
 class AssignmentStatus(str, Enum):
     ACTIVE = "ACTIVE"
@@ -35,6 +37,6 @@ class Assignment:
 
     def release(self, end_at: datetime):
         if self.status != AssignmentStatus.ACTIVE:
-            raise ValueError("Assignment is not active")
+            raise ConflictError("Assignment is not active")
         self.end_at = end_at
         self.status = AssignmentStatus.CLOSED

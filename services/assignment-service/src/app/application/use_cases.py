@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional
 from uuid import uuid4
+from app.domain.errors import NotFoundError
 
 from app.domain.models import (
     Assignment, AssignmentId, UserId, BicycleId, AssignmentStatus
@@ -57,7 +58,7 @@ class ReleaseBicycle:
             raise ValueError("Repository does not support get_by_id")
         assignment = self.repo.get_by_id(assignment_id)
         if assignment is None:
-            raise ValueError("Assignment not found")
+            raise NotFoundError("Assignment not found")
         assignment.release(datetime.utcnow())
 
 

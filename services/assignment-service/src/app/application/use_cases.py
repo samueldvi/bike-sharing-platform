@@ -45,3 +45,37 @@ class AssignBicycle:
 
         self.repo.save(assignment)
         return assignment.id
+
+
+class ReleaseBicycle:
+    def __init__(self, repo: AssignmentRepository):
+        self.repo = repo
+
+    def execute(self, assignment_id: AssignmentId) -> None:
+        # Per demo: scan semplice (repo in-memory). In DB avresti getById.
+        if not hasattr(self.repo, "get_by_id"):
+            raise ValueError("Repository does not support get_by_id")
+        assignment = self.repo.get_by_id(assignment_id)
+        if assignment is None:
+            raise ValueError("Assignment not found")
+        assignment.release(datetime.utcnow())
+
+
+class ListBikesInUse:
+    def __init__(self, repo: AssignmentRepository):
+        self.repo = repo
+
+    def execute(self) -> list[str]:
+        if not hasattr(self.repo, "list_active"):
+            raise ValueError("Repository does not support list_active")
+        active = self.repo.list_active()
+        return [a.bicycle_id.value for a in active]
+
+
+class GetUserBike:
+    def __init__(self, repo: AssignmentRepository):
+        self.repo = repo
+
+    def execute(self, user_id: UserId) -> str | None:
+        active = self.repo.find_active_by_user(user_id)
+        return active.bicycle_id.value if active else None

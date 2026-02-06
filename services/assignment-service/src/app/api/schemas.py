@@ -8,3 +8,11 @@ class AssignRequest(BaseModel):
 
 class AssignResponse(BaseModel):
     assignment_id: str
+
+
+class ReleaseRequest(BaseModel):
+    assignment_id: str
+
+
+class UserBikeResponse(BaseModel):
+    bicycle_id: str | None

@@ -1,7 +1,9 @@
-from fastapi import FastAPI, HTTPException
+import logging
+from fastapi import FastAPI, HTTPException, APIRouter
 from app.api.schemas import (
     AssignRequest, AssignResponse, ReleaseRequest, UserBikeResponse
 )
+from app.api.middleware import request_id_middleware
 from app.application.use_cases import (
     AssignBicycle, ReleaseBicycle, ListBikesInUse, GetUserBike
 )
@@ -9,16 +11,20 @@ from app.infrastructure.in_memory_repo import InMemoryAssignmentRepository
 from app.domain.models import UserId, BicycleId, AssignmentId
 from app.domain.errors import DomainError, ConflictError, NotFoundError
 
-app = FastAPI(title="Assignment Service", version="0.1.0")
+logging.basicConfig(level=logging.INFO)
+
+app = FastAPI(title="Assignment Service", version="1.0.0")
+app.middleware("http")(request_id_middleware)
+
+router = APIRouter(prefix="/v1")
 
 _repo = InMemoryAssignmentRepository()
-
 _assign_uc = AssignBicycle(_repo)
 _release_uc = ReleaseBicycle(_repo)
 _list_uc = ListBikesInUse(_repo)
 _user_bike_uc = GetUserBike(_repo)
 
-@app.get("/health")
+@router.get("/health")
 def health():
     return {"status": "ok"}
 
@@ -31,19 +37,16 @@ def handle_domain_error(e: DomainError):
     raise HTTPException(status_code=400, detail=str(e))
 
 
-@app.post("/assign", response_model=AssignResponse)
+@router.post("/assign", response_model=AssignResponse)
 def assign(req: AssignRequest):
     try:
-        assignment_id = _assign_uc.execute(
-            UserId(req.user_id),
-            BicycleId(req.bicycle_id),
-        )
+        assignment_id = _assign_uc.execute(UserId(req.user_id), BicycleId(req.bicycle_id))
         return AssignResponse(assignment_id=assignment_id.value)
     except DomainError as e:
         handle_domain_error(e)
 
 
-@app.post("/release")
+@router.post("/release")
 def release(req: ReleaseRequest):
     try:
         _release_uc.execute(AssignmentId(req.assignment_id))
@@ -52,7 +55,7 @@ def release(req: ReleaseRequest):
         handle_domain_error(e)
 
 
-@app.get("/bikes-in-use")
+@router.get("/bikes-in-use")
 def bikes_in_use():
     try:
         return {"bicycles": _list_uc.execute()}
@@ -60,10 +63,13 @@ def bikes_in_use():
         handle_domain_error(e)
 
 
-@app.get("/user-bike/{user_id}", response_model=UserBikeResponse)
+@router.get("/user-bike/{user_id}", response_model=UserBikeResponse)
 def user_bike(user_id: str):
     try:
         bike = _user_bike_uc.execute(UserId(user_id))
         return UserBikeResponse(bicycle_id=bike)
     except DomainError as e:
         handle_domain_error(e)
+
+
+app.include_router(router)
